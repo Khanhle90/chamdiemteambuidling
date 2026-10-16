@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ban Tổ Chức - Quản Trị</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body { -webkit-tap-highlight-color: transparent; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-20">
+
+  <!-- HEADER -->
+  <header class="bg-slate-900 text-white px-4 py-3 shadow-md sticky top-0 z-30 flex items-center justify-between">
+    <div>
+      <h1 class="font-bold text-base tracking-wide uppercase flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved text-amber-400"></i> Ban Tổ Chức Quản Trị
+      </h1>
+      <p id="activeMatchLabel" class="text-xs text-slate-400 mt-0.5">Đang kết nối máy chủ...</p>
+    </div>
+    <button onclick="fetchData(true)" class="bg-slate-800 active:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-slate-700">
+      <i id="syncIcon" class="fa-solid fa-rotate"></i> Đồng bộ
+    </button>
+  </header>
+
+  <main class="max-w-md mx-auto p-3">
+
+    <!-- TAB 1: QUẢN LÝ ĐỘI CHƠI & TRẬN ĐẤU -->
+    <section id="tab-admin-home" class="space-y-4">
+      
+      <!-- DANH SÁCH ĐỘI CHƠI & NÚT XÓA ĐỘI (NHẬP 8888) -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-users text-indigo-600 mr-1"></i> Danh Sách Đội Hiện Tại</h3>
+          <span class="text-[11px] text-red-500 font-medium">Xóa đội cần mã 8888</span>
+        </div>
+        <div id="teamListAdmin" class="space-y-2"></div>
+
+        <!-- FORM THÊM ĐỘI -->
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Thêm Đội Chơi Mới</label>
+          <div class="flex gap-2">
+            <input type="text" id="newTeamName" placeholder="Nhập tên đội..." class="flex-1 px-3 py-2 border rounded-xl text-sm" />
+            <input type="color" id="newTeamColor" value="#ef4444" class="w-11 h-10 p-1 border rounded-xl cursor-pointer" />
+            <button onclick="createNewTeam()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold">Thêm</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUẢN LÝ TRẬN ĐẤU -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+        <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-flag-checkered text-indigo-600 mr-1"></i> Quản Lý Trận Đấu</h3>
+        <div class="flex gap-2">
+          <input type="text" id="newMatchName" placeholder="Tên trận mới..." class="flex-1 px-3 py-2 border rounded-xl text-sm" />
+          <button onclick="createNewMatch()" class="bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold">Mở trận mới</button>
+        </div>
+        <div id="matchListAdmin" class="space-y-2 pt-2"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: XEM NHẬT KÝ LIVE FEED (CÓ TÊN TRỌNG TÀI) -->
+    <section id="tab-admin-feed" class="hidden space-y-2.5">
+      <div class="flex justify-between items-center px-1">
+        <h2 class="text-xs font-bold uppercase text-slate-500">Nhật ký chấm điểm trực tiếp</h2>
+        <span id="logCountBadge" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full">0 lượt</span>
+      </div>
+      <div id="liveFeedContainer" class="space-y-2"></div>
+    </section>
+
+    <!-- TAB 3: XEM BẢNG XẾP HẠNG -->
+    <section id="tab-admin-leaderboard" class="hidden space-y-3">
+      <h2 class="text-xs font-bold uppercase text-slate-500 px-1">Bảng xếp hạng tổng điểm</h2>
+      <div id="leaderboardContainer" class="space-y-2.5"></div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg hidden z-50"></div>
+
+  <!-- MENU DÀNH CHO QUẢN TRỊ -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-40 max-w-md mx-auto">
+    <button onclick="switchTab('admin-home')" id="nav-admin-home" class="flex flex-col items-center text-indigo-600 font-bold text-xs"><i class="fa-solid fa-sliders text-lg mb-0.5"></i> Quản lý</button>
+    <button onclick="switchTab('admin-feed')" id="nav-admin-feed" class="flex flex-col items-center text-slate-400 font-medium text-xs"><i class="fa-solid fa-bolt text-lg mb-0.5"></i> Nhật ký Live</button>
+    <button onclick="switchTab('admin-leaderboard')" id="nav-admin-leaderboard" class="flex flex-col items-center text-slate-400 font-medium text-xs"><i class="fa-solid fa-trophy text-lg mb-0.5"></i> Xếp hạng</button>
+  </nav>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwF8EcglCebOzG8Hc4BwUFoKxOimuS0rYtfFhoD9aNgKEZzhFlRU8LcliUd6vaWYOUtCA/exec";
+    let appState = { activeMatch: null, matches: [], teams: [], logs: [] };
+
+    window.addEventListener("DOMContentLoaded", () => {
+      fetchData(true);
+      setInterval(() => fetchData(false), 8000);
+    });
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = `fixed top-16 left-1/2 -translate-x-1/2 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg z-50 ${isError ? 'bg-red-600' : 'bg-emerald-600'}`;
+      t.classList.remove("hidden");
+      setTimeout(() => t.classList.add("hidden"), 2500);
+    }
+
+    async function fetchData(showSpinner = false) {
+      const icon = document.getElementById("syncIcon");
+      if (showSpinner) icon.classList.add("fa-spin");
+      try {
+        const res = await fetch(SCRIPT_URL);
+        appState = await res.json();
+        renderAll();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (showSpinner) icon.classList.remove("fa-spin");
+      }
+    }
+
+    function renderAll() {
+      const match = appState.activeMatch;
+      document.getElementById("activeMatchLabel").textContent = match ? `Trận: ${match.name}` : "Không có trận Đang diễn ra";
+      renderTeamsAdmin();
+      renderMatchesAdmin();
+      renderLiveFeed();
+      renderLeaderboard();
+    }
+
+    // DANH SÁCH ĐỘI KÈM NÚT XÓA (YÊU CẦU MÃ 8888)
+    function renderTeamsAdmin() {
+      const container = document.getElementById("teamListAdmin");
+      if (!appState.teams.length) {
+        container.innerHTML = `<div class="text-xs text-slate-400 italic">Chưa có đội chơi nào.</div>`;
+        return;
+      }
+      container.innerHTML = appState.teams.map(t => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+          <div class="flex items-center gap-2">
+            <span class="w-3.5 h-3.5 rounded-full inline-block" style="background:${t.color}"></span>
+            <span class="text-xs font-bold text-slate-800">${t.name}</span>
+          </div>
+          <button onclick="promptDeleteTeam('${t.id}', '${t.name}')" class="text-xs text-red-600 font-bold px-2 py-1 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200">
+            <i class="fa-solid fa-trash-can mr-1"></i> Xóa
+          </button>
+        </div>
+      `).join("");
+    }
+
+    async function promptDeleteTeam(idDoi, tenDoi) {
+      const pin = prompt(`CẢNH BÁO: Xóa đội [${tenDoi}] sẽ xóa toàn bộ điểm số của đội này.\n\nNhập mã xác nhận 8888 để thực hiện:`);
+      if (pin === null) return;
+      if (pin.trim() !== "8888") {
+        return alert("Sai mã xác nhận! Thao tác xóa bị hủy bỏ.");
+      }
+
+      showToast("Đang xóa đội...");
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "DELETE_TEAM", idDoi: idDoi, pin: "8888" })
+      });
+      const r = await res.json();
+      if (r.status === "success") {
+        appState = r.data;
+        renderAll();
+        showToast("Đã xóa đội thành công!");
+      } else {
+        alert(r.message || "Lỗi khi xóa đội!");
+      }
+    }
+
+    function renderMatchesAdmin() {
+      const container = document.getElementById("matchListAdmin");
+      if (!appState.matches || !appState.matches.length) {
+        container.innerHTML = `<div class="text-xs text-slate-400 italic">Chưa có trận đấu nào.</div>`;
+        return;
+      }
+      container.innerHTML = appState.matches.map(m => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl border ${m.status === 'Đang diễn ra' ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-slate-50'}">
+          <div>
+            <div class="text-xs font-bold text-slate-800">${m.name}</div>
+            <div class="text-[11px] ${m.status === 'Đang diễn ra' ? 'text-emerald-600 font-bold' : 'text-slate-400'}">${m.status}</div>
+          </div>
+          ${m.status === 'Đang diễn ra' ? `<button onclick="endMatch('${m.id}')" class="bg-red-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold">Kết thúc</button>` : ''}
+        </div>
+      `).join("");
+    }
+
+    function renderLiveFeed() {
+      const container = document.getElementById("liveFeedContainer");
+      document.getElementById("logCountBadge").textContent = `${appState.logs.length} lượt`;
+      if (!appState.logs.length) {
+        container.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center text-xs text-slate-400">Chưa có lượt chấm điểm nào.</div>`;
+        return;
+      }
+      container.innerHTML = appState.logs.map(log => `
+        <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div class="space-y-0.5">
+            <div class="font-bold text-sm text-slate-800 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${log.mauSac}"></span>${log.tenDoi}</div>
+            <div class="text-xs font-semibold ${log.phamQuy ? 'text-red-600' : 'text-indigo-600'}">${log.hienThiNhatKy}</div>
+            <div class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+              <i class="fa-solid fa-user-check text-indigo-500"></i> TT: <span class="font-bold text-slate-700">${log.trongTai || 'Ẩn danh'}</span>
+              ${log.cheDo !== 'Thêm điểm' && !log.phamQuy ? ` • TB: ${log.tgTrungBinh \vert{}\vert{} log.soLuongDem} • Hạng ${log.hangThuThach}` : ''}
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-xl font-extrabold text-sm ${log.phamQuy ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">${log.phamQuy ? '0đ' : '+' + log.diemDatDuoc + 'đ'}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById("leaderboardContainer");
+      if (!appState.teams.length) {
+        container.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center text-xs text-slate-400">Chưa có đội.</div>`;
+        return;
+      }
+      container.innerHTML = appState.teams.map((t, idx) => `
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-full font-extrabold text-xs flex items-center justify-center ${idx === 0 ? 'bg-amber-400 text-slate-900' : (idx === 1 ? 'bg-slate-300' : 'bg-amber-700 text-white')}">#${idx + 1}</span>
+            <div class="font-bold text-sm text-slate-800 flex items-center gap-1.5"><span class="w-3 h-3 rounded-full inline-block" style="background:${t.color}"></span>${t.name}</div>
+          </div>
+          <div class="text-lg font-extrabold text-indigo-700">${t.totalScore} đ</div>
+        </div>
+      `).join("");
+    }
+
+    async function createNewTeam() {
+      const tenDoi = document.getElementById("newTeamName").value.trim();
+      const mauSac = document.getElementById("newTeamColor").value;
+      if (!tenDoi) return showToast("Nhập tên đội!", true);
+      const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "ADD_TEAM", tenDoi, mauSac }) });
+      const r = await res.json();
+      if (r.status === "success") {
+        document.getElementById("newTeamName").value = "";
+        appState = r.data;
+        renderAll();
+        showToast("Đã thêm đội!");
+      }
+    }
+
+    async function createNewMatch() {
+      const tenTran = document.getElementById("newMatchName").value.trim();
+      if (!tenTran) return showToast("Nhập tên trận!", true);
+      const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "CREATE_MATCH", tenTran }) });
+      const r = await res.json();
+      if (r.status === "success") {
+        document.getElementById("newMatchName").value = "";
+        appState = r.data;
+        renderAll();
+        showToast("Đã mở trận mới!");
+      }
+    }
+
+    async function endMatch(idTran) {
+      if (!confirm("Kết thúc trận này?")) return;
+      const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "END_MATCH", idTran }) });
+      const r = await res.json();
+      if (r.status === "success") {
+        appState = r.data;
+        renderAll();
+        showToast("Đã kết thúc trận!");
+      }
+    }
+
+    function switchTab(tab) {
+      ["admin-home", "admin-feed", "admin-leaderboard"].forEach(t => {
+        document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
+        document.getElementById("nav-" + t).className = t === tab 
+          ? "flex flex-col items-center text-indigo-600 font-bold text-xs" 
+          : "flex flex-col items-center text-slate-400 font-medium text-xs";
+      });
+    }
+  </script>
+</body>
+</html>
