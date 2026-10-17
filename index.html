@@ -326,7 +326,102 @@
 
     window.setDirectPoint = function(val) { document.getElementById("inputDirectPoints").value = val; };
 
+    // BIẾN QUẢN LÝ THỜI GIAN CHỜ 10 GIÂY
+    var cooldownTimer = null;
+    var cooldownSeconds = 0;
+
+    window.startCooldown = function(seconds) {
+      var btn = document.getElementById("submitBtn");
+      cooldownSeconds = seconds;
+      btn.disabled = true;
+      btn.classList.add("opacity-60", "cursor-not-allowed", "bg-slate-500");
+      btn.classList.remove("bg-indigo-600", "hover:bg-indigo-700", "active:bg-indigo-800");
+
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      btn.innerHTML = '<i class="fa-solid fa-clock"></i> CHỜ ' + cooldownSeconds + 'S ĐỂ CHẤM LƯỢT TIẾP';
+
+      cooldownTimer = setInterval(function() {
+        cooldownSeconds--;
+        if (cooldownSeconds > 0) {
+          btn.innerHTML = '<i class="fa-solid fa-clock"></i> CHỜ ' + cooldownSeconds + 'S ĐỂ CHẤM LƯỢT TIẾP';
+        } else {
+          clearInterval(cooldownTimer);
+          cooldownTimer = null;
+          cooldownSeconds = 0;
+          btn.disabled = false;
+          btn.classList.remove("opacity-60", "cursor-not-allowed", "bg-slate-500");
+          btn.classList.add("bg-indigo-600", "hover:bg-indigo-700", "active:bg-indigo-800");
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> LƯU ĐIỂM NGAY';
+        }
+      }, 1000);
+    };
+
     window.submitScore = async function() {
+      // 1. Nếu đang trong 10 giây chờ, chặn tuyệt đối không cho gửi
+      if (cooldownSeconds > 0) {
+        window.showToast("Vui lòng đợi " + cooldownSeconds + "s trước khi chấm lượt tiếp theo!", true);
+        return;
+      }
+
+      if (!refereeName) { window.checkRefereeName(); return; }
+      if (!appState.activeMatch) return window.showToast("Không có trận Đang diễn ra!", true);
+      if (!selectedTeamId) return window.showToast("Vui lòng chọn đội để khóa vào máy!", true);
+
+      var isFoul = document.getElementById("foulCheckbox").checked;
+      var thoiGianGiay = 0, soThanhVien = 0, soLuongDem = 0, diemTrucTiep = 0;
+
+      if (selectedMode !== "Thêm điểm" && !selectedTurn) return window.showToast("Đã hết lượt chơi!", true);
+      if (selectedMode === "Tính giờ" && !isFoul) {
+        thoiGianGiay = parseFloat(document.getElementById("inputSeconds").value);
+        soThanhVien = parseInt(document.getElementById("inputMembers").value) || 0;
+        if (!thoiGianGiay || thoiGianGiay <= 0) return window.showToast("Nhập thời gian hợp lệ!", true);
+      } else if (selectedMode === "Đếm số" && !isFoul) {
+        soLuongDem = parseInt(document.getElementById("inputCount").value);
+        if (!soLuongDem || soLuongDem <= 0) return window.showToast("Nhập số lượng đếm!", true);
+      } else if (selectedMode === "Thêm điểm") {
+        diemTrucTiep = parseInt(document.getElementById("inputDirectPoints").value);
+        if (isNaN(diemTrucTiep) || diemTrucTiep === 0) return window.showToast("Nhập điểm cộng!", true);
+      }
+
+      var btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG GỬI...';
+
+      try {
+        var res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "ADD_SCORE", idDoi: selectedTeamId, cheDo: selectedMode,
+            luotChoi: selectedMode === "Thêm điểm" ? "" : selectedTurn,
+            thoiGianGiay: thoiGianGiay, soThanhVien: soThanhVien, soLuongDem: soLuongDem,
+            phamQuy: isFoul, diemTrucTiep: diemTrucTiep, trongTai: refereeName
+          })
+        });
+        var result = await res.json();
+        if (result.status === "success") {
+          appState = result.data;
+          document.getElementById("inputSeconds").value = "";
+          document.getElementById("inputMembers").value = "";
+          document.getElementById("inputCount").value = "";
+          document.getElementById("foulCheckbox").checked = false;
+          window.updateInputVisibility();
+          window.renderAll();
+          window.showToast("Đã lưu điểm thành công!");
+          window.switchTab("score");
+
+          // KÍCH HOẠT ĐẾM NGƯỢC KHÓA NÚT 10 GIÂY
+          window.startCooldown(10);
+        } else {
+          window.showToast(result.message || "Lỗi lưu điểm!", true);
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> LƯU ĐIỂM NGAY';
+        }
+      } catch (e) {
+        window.showToast("Lỗi kết nối mạng, vui lòng thử lại!", true);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> LƯU ĐIỂM NGAY';
+      }
+    };
       if (!refereeName) { window.checkRefereeName(); return; }
       if (!appState.activeMatch) return window.showToast("Không có trận Đang diễn ra!", true);
       if (!selectedTeamId) return window.showToast("Vui lòng chọn đội để khóa vào máy!", true);
