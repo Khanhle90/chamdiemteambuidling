@@ -30,6 +30,35 @@
     </div>
   </div>
 
+  <!-- MODAL SỬA TÊN & MÀU SẮC ĐỘI -->
+  <div id="editTeamModal" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full space-y-4">
+      <div class="text-center">
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-xl mb-2">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <h3 class="font-bold text-base text-slate-800">Chỉnh Sửa Thông Tin Đội</h3>
+        <p class="text-xs text-slate-500">Thay đổi tên đội và màu sắc nhận diện</p>
+      </div>
+      <input type="hidden" id="editTeamId" />
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1">Tên đội mới</label>
+        <input type="text" id="editTeamNameInput" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold focus:outline-none focus:border-indigo-600" />
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1">Màu sắc nhận diện</label>
+        <div class="flex items-center gap-3">
+          <input type="color" id="editTeamColorInput" class="w-12 h-10 p-1 border rounded-xl cursor-pointer" />
+          <span class="text-xs text-slate-500 font-medium">Bấm vào ô màu để đổi màu</span>
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="window.closeEditTeamModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Hủy</button>
+        <button type="button" onclick="window.saveEditTeam()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">Lưu Thay Đổi</button>
+      </div>
+    </div>
+  </div>
+
   <!-- HEADER -->
   <header class="bg-indigo-700 text-white px-4 py-3 shadow-md sticky top-0 z-30 flex items-center justify-between">
     <div>
@@ -73,7 +102,7 @@
           <div id="gameButtonsContainer" class="grid grid-cols-2 gap-2"></div>
         </div>
 
-        <!-- 3. LƯỢT CHƠI (HIỆN CHO TẤT CẢ CÁC CHẾ ĐỘ: TÍNH GIỜ, ĐẾM SỐ, XẾP HẠNG) -->
+        <!-- 3. LƯỢT CHƠI (CÓ CHO TẤT CẢ CÁC CHẾ ĐỘ: TÍNH GIỜ, ĐẾM SỐ, XẾP HẠNG) -->
         <div id="turnSection" class="hidden">
           <div class="flex justify-between items-center mb-1.5">
             <label class="text-xs font-bold uppercase text-slate-600">3. Chọn Lượt Chơi <span class="text-red-500">*</span></label>
@@ -206,7 +235,7 @@
           <button type="button" onclick="window.lockAdminAgain()" class="text-xs text-red-600 font-bold underline">Khóa lại</button>
         </div>
 
-        <!-- QUẢN LÝ ĐỘI CHƠI (SỬA & XÓA) -->
+        <!-- QUẢN LÝ ĐỘI CHƠI (SỬA CẢ TÊN & MÀU SẮC, XÓA ĐỘI) -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
           <div class="flex justify-between items-center">
             <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-users text-indigo-600 mr-1"></i> Danh Sách Đội Hiện Tại</h3>
@@ -214,7 +243,7 @@
           <div id="teamListAdmin" class="space-y-2"></div>
 
           <div class="pt-2 border-t border-slate-100">
-            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Thêm Đội Chơi Mới</label>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Thêm Đội Chơi Mới Thủ Công</label>
             <div class="flex gap-2">
               <input type="text" id="newTeamName" placeholder="Nhập tên đội..." class="flex-1 px-3 py-2 border rounded-xl text-sm" />
               <input type="color" id="newTeamColor" value="#ef4444" class="w-11 h-10 p-1 border rounded-xl cursor-pointer" />
@@ -223,7 +252,7 @@
           </div>
         </div>
 
-        <!-- TẠO TRẬN ĐẤU MỚI (MẶC ĐỊNH 1 Ô + NÚT DẤU +) -->
+        <!-- TẠO TRẬN ĐẤU MỚI (CÓ SỐ LƯỢNG ĐỘI TỰ ĐỘNG + DANH SÁCH GAME) -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
           <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-flag-checkered text-indigo-600 mr-1"></i> Tạo Chương Trình / Trận Đấu Mới</h3>
           
@@ -232,9 +261,16 @@
             <input type="text" id="newMatchName" placeholder="Nhập tên chương trình..." class="w-full px-3 py-2 border rounded-xl text-sm font-semibold" />
           </div>
 
+          <!-- SỐ LƯỢNG ĐỘI KHỞI TẠO TỰ ĐỘNG -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">2. Số lượng đội tham gia (Tự động tạo sẵn)</label>
+            <input type="number" id="newMatchTeamCount" value="11" min="1" max="30" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold" placeholder="Nhập số lượng đội (VD: 11)" />
+            <p class="text-[11px] text-slate-400 mt-0.5">Hệ thống sẽ tự động tạo đủ số đội (Đội 1, Đội 2...) kèm màu sắc nhận diện khác nhau.</p>
+          </div>
+
           <div>
             <div class="flex justify-between items-center mb-1.5">
-              <label class="text-xs font-bold text-slate-600">2. Danh sách Game & Điểm tối đa từng Game</label>
+              <label class="text-xs font-bold text-slate-600">3. Danh sách Game & Điểm tối đa từng Game</label>
             </div>
             <div id="adminGameConfigRows" class="space-y-2.5"></div>
 
@@ -492,7 +528,6 @@
         var isSelected = g.key === selectedGameKey;
         var maxPtText = (g.mode !== "Thêm điểm" && g.pointScale) ? (" • Max " + g.pointScale.split("-")[0] + "đ") : "";
 
-        // Kiểm tra xem đội đã hoàn thành bao nhiêu lượt ở game này
         var scoredTurnsCount = 0;
         if (selectedTeamId && g.key !== "HOAT_NAO") {
           var prefix = g.name + " - ";
@@ -541,7 +576,7 @@
       window.updateInputVisibility();
     };
 
-    // 3. RENDER LƯỢT CHƠI (TÍNH GIỜ, ĐẾM SỐ, XẾP HẠNG ĐỀU CÓ LƯỢT CHƠI)
+    // 3. RENDER LƯỢT CHƠI
     window.getUsedTurnsForCurrentGame = function() {
       if (!selectedTeamId || selectedMode === "Thêm điểm") return [];
       var prefix = selectedGameName + " - ";
@@ -593,7 +628,7 @@
       document.getElementById("turnStatusHint").textContent = nextTurn ? ("Mở lượt: " + nextTurn) : "Đã hoàn thành cả 6 lượt!";
     };
 
-    // 4. CHẾ ĐỘ CHẤM (THỨ TỰ: THÊM ĐIỂM -> TÍNH GIỜ -> ĐẾM SỐ -> XẾP HẠNG)
+    // 4. CHẾ ĐỘ CHẤM
     window.manualSelectMode = function(mode) {
       if (selectedGameKey !== "KHAC") {
         window.showToast("Chế độ chấm đã tự động chọn theo Game. Chọn mục 'Khác' nếu muốn tùy chỉnh!", true);
@@ -677,7 +712,6 @@
       if (!appState.activeMatch) return window.showToast("Không có trận Đang diễn ra!", true);
       if (!selectedTeamId) return window.showToast("Vui lòng chọn đội của bạn trước!", true);
 
-      // Tạo nhãn lượt chơi: Nếu là chế độ tính thành tích thì luôn ghép theo định dạng: "Tên Game - L1"
       var turnLabel = selectedGameName;
       if (selectedMode !== "Thêm điểm") {
         if (!selectedTurn) return window.showToast("Đã hoàn thành tất cả 6 lượt chơi của Game này!", true);
@@ -825,6 +859,7 @@
       document.getElementById("adminPinInput").value = "";
     };
 
+    // QUẢN LÝ ĐỘI: DANH SÁCH ĐỘI (CÓ NÚT SỬA TÊN & MÀU, NÚT XÓA)
     window.renderTeamsAdmin = function() {
       var container = document.getElementById("teamListAdmin");
       if (!container) return;
@@ -834,13 +869,14 @@
       }
       container.innerHTML = appState.teams.map(function(t) {
         var safeName = t.name.replace(/'/g, "\\'");
+        var safeColor = (t.color || "#3b82f6").replace(/'/g, "\\'");
         return '<div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50">' +
           '<div class="flex items-center gap-2 truncate pr-2">' +
-            '<span class="w-3.5 h-3.5 rounded-full inline-block shrink-0" style="background:' + t.color + '"></span>' +
+            '<span class="w-4 h-4 rounded-full inline-block shrink-0 shadow-sm border border-white" style="background:' + t.color + '"></span>' +
             '<span class="text-xs font-bold text-slate-800 truncate">' + t.name + '</span>' +
           '</div>' +
           '<div class="flex items-center gap-1.5 shrink-0">' +
-            '<button type="button" onclick="window.promptEditTeam(\'' + t.id + '\', \'' + safeName + '\')" class="text-xs text-indigo-600 font-bold px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200">' +
+            '<button type="button" onclick="window.openEditTeamModal(\'' + t.id + '\', \'' + safeName + '\', \'' + safeColor + '\')" class="text-xs text-indigo-600 font-bold px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200">' +
               '<i class="fa-solid fa-pen mr-1"></i> Sửa' +
             '</button>' +
             '<button type="button" onclick="window.promptDeleteTeam(\'' + t.id + '\', \'' + safeName + '\')" class="text-xs text-red-600 font-bold px-2.5 py-1 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200">' +
@@ -851,25 +887,38 @@
       }).join("");
     };
 
-    window.promptEditTeam = async function(idDoi, currentName) {
-      var newName = prompt("Nhập tên mới cho đội [" + currentName + "]:", currentName);
-      if (newName === null) return;
-      newName = newName.trim();
-      if (!newName || newName === currentName) return;
+    // MODAL SỬA TÊN & MÀU SẮC ĐỘI
+    window.openEditTeamModal = function(idDoi, currentName, currentColor) {
+      document.getElementById("editTeamId").value = idDoi;
+      document.getElementById("editTeamNameInput").value = currentName;
+      document.getElementById("editTeamColorInput").value = currentColor || "#3b82f6";
+      document.getElementById("editTeamModal").classList.remove("hidden");
+    };
 
-      window.showToast("Đang cập nhật tên đội...");
+    window.closeEditTeamModal = function() {
+      document.getElementById("editTeamModal").classList.add("hidden");
+    };
+
+    window.saveEditTeam = async function() {
+      var idDoi = document.getElementById("editTeamId").value;
+      var newName = document.getElementById("editTeamNameInput").value.trim();
+      var newColor = document.getElementById("editTeamColorInput").value;
+      if (!newName) return alert("Vui lòng nhập tên đội!");
+
+      window.showToast("Đang cập nhật đội...");
       try {
         var res = await fetch(SCRIPT_URL, {
           method: "POST",
-          body: JSON.stringify({ action: "EDIT_TEAM", idDoi: idDoi, tenDoiMoi: newName })
+          body: JSON.stringify({ action: "EDIT_TEAM", idDoi: idDoi, tenDoiMoi: newName, mauSacMoi: newColor })
         });
         var r = await res.json();
         if (r.status === "success") {
+          window.closeEditTeamModal();
           appState = r.data;
           window.renderAll();
-          window.showToast("Đã sửa tên đội thành công!");
+          window.showToast("Đã cập nhật tên và màu sắc đội!");
         } else {
-          alert(r.message || "Lỗi khi sửa tên đội!");
+          alert(r.message || "Lỗi khi cập nhật đội!");
         }
       } catch (e) {
         window.showToast("Lỗi kết nối mạng!", true);
@@ -926,9 +975,12 @@
       }
     };
 
+    // TẠO TRẬN ĐẤU MỚI (TỰ ĐỘNG TẠO ĐỦ SỐ ĐỘI THAM GIA)
     window.createNewMatch = async function() {
       var tenTran = document.getElementById("newMatchName").value.trim();
       if (!tenTran) return window.showToast("Vui lòng nhập Tên chương trình!", true);
+
+      var teamCount = parseInt(document.getElementById("newMatchTeamCount").value) || 0;
 
       window.syncAdminDraftGamesFromDOM();
       var games = [];
@@ -950,6 +1002,7 @@
           body: JSON.stringify({
             action: "CREATE_MATCH",
             tenTran: tenTran,
+            teamCount: teamCount,
             games: games
           })
         });
@@ -963,7 +1016,7 @@
           selectedMode = "Thêm điểm";
           appState = r.data;
           window.renderAll();
-          window.showToast("Đã tạo chương trình mới thành công!");
+          window.showToast("Đã tạo chương trình và tự động sinh " + (teamCount > 0 ? teamCount : 0) + " đội!");
         } else {
           alert(r.message || "Lỗi khi tạo chương trình!");
         }
