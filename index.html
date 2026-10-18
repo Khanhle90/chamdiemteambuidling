@@ -8,20 +8,39 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     body { -webkit-tap-highlight-color: transparent; font-family: system-ui, -apple-system, sans-serif; }
+    /* BẢO ĐẢM KHUNG ẨN KHÔNG BAO GIỜ CHẶN CLICK TRÊN MÀN HÌNH */
+    .hidden { display: none !important; }
     .turn-locked { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; }
   </style>
 </head>
 <body class="bg-slate-100 min-h-screen pb-24">
 
-  <!-- MODAL BẮT BUỘC NHẬP TÊN TRỌNG TÀI -->
-  <div id="refereeNameModal" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4 hidden">
+  <!-- 1. MODAL THÔNG BÁO KHẨN TỪ BAN TỔ CHỨC -->
+  <div id="urgentNoticeModal" class="fixed inset-0 bg-red-950/90 z-50 items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-sm w-full space-y-4 text-center border-4 border-amber-400">
+      <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+        <i class="fa-solid fa-bullhorn"></i>
+      </div>
+      <div>
+        <span class="bg-red-100 text-red-700 font-extrabold text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider">Thông Báo Khẩn</span>
+        <h3 class="font-extrabold text-lg text-slate-900 mt-2">Ban Tổ Chức Thông Báo</h3>
+      </div>
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-slate-800 text-sm font-semibold text-left max-h-48 overflow-y-auto whitespace-pre-wrap" id="urgentNoticeContent"></div>
+      <button type="button" onclick="window.dismissUrgentNotice()" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-2xl shadow-lg text-sm tracking-wide transition uppercase">
+        <i class="fa-solid fa-check-double mr-1.5"></i> Tôi Đã Đọc & Đã Hiểu
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. MODAL BẮT BUỘC NHẬP TÊN TRỌNG TÀI -->
+  <div id="refereeNameModal" class="fixed inset-0 bg-slate-900/80 z-50 items-center justify-center p-4 hidden">
     <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full space-y-4 text-center">
       <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl">
         <i class="fa-solid fa-user-pen"></i>
       </div>
       <div>
         <h3 class="font-bold text-base text-slate-800">Thông Tin Trọng Tài</h3>
-        <p class="text-xs text-slate-500 mt-1">Vui lòng nhập Họ & Tên của bạn để ghi nhận vào nhật ký chấm điểm.</p>
+        <p class="text-xs text-slate-500 mt-1">Vui lòng nhập Họ & Tên của bạn để xác thực vào nhật ký chấm điểm.</p>
       </div>
       <input type="text" id="refereeNameInput" placeholder="Ví dụ: Nguyễn Văn A..." class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl text-center font-bold text-slate-800 text-sm focus:outline-none focus:border-indigo-600" />
       <button type="button" onclick="window.saveRefereeName()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition">
@@ -30,8 +49,8 @@
     </div>
   </div>
 
-  <!-- MODAL SỬA TÊN & MÀU SẮC ĐỘI -->
-  <div id="editTeamModal" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4 hidden">
+  <!-- 3. MODAL SỬA TÊN & MÀU SẮC ĐỘI -->
+  <div id="editTeamModal" class="fixed inset-0 bg-slate-900/80 z-50 items-center justify-center p-4 hidden">
     <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full space-y-4">
       <div class="text-center">
         <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-xl mb-2">
@@ -235,10 +254,22 @@
           <button type="button" onclick="window.lockAdminAgain()" class="text-xs text-red-600 font-bold underline">Khóa lại</button>
         </div>
 
-        <!-- QUẢN LÝ ĐỘI CHƠI (SỬA CẢ TÊN & MÀU SẮC, XÓA ĐỘI) -->
+        <!-- TÍNH NĂNG: GỬI THÔNG BÁO CHO TẤT CẢ TRỌNG TÀI -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
+          <h3 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-bullhorn text-red-600"></i> Phát Thông Báo Cho Trọng Tài
+          </h3>
+          <p class="text-[11px] text-slate-500">Khi gửi, màn hình máy tất cả trọng tài sẽ hiện bảng thông báo che kín giao diện chính.</p>
+          <textarea id="broadcastInput" rows="2" placeholder="Nhập nội dung thông báo khẩn..." class="w-full p-2.5 border rounded-xl text-xs font-medium focus:outline-none focus:border-red-600"></textarea>
+          <button type="button" onclick="window.sendBroadcast()" class="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-paper-plane"></i> Gửi Thông Báo Toàn Sân
+          </button>
+        </div>
+
+        <!-- 1. QUẢN LÝ ĐỘI CHƠI (HIỆN RÕ TÊN TRỌNG TÀI ĐÃ CHỌN ĐỘI) -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
           <div class="flex justify-between items-center">
-            <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-users text-indigo-600 mr-1"></i> Danh Sách Đội Hiện Tại</h3>
+            <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-users text-indigo-600 mr-1"></i> Danh Sách Đội & Trọng Tài Phụ Trách</h3>
           </div>
           <div id="teamListAdmin" class="space-y-2"></div>
 
@@ -252,7 +283,35 @@
           </div>
         </div>
 
-        <!-- TẠO TRẬN ĐẤU MỚI (CÓ SỐ LƯỢNG ĐỘI TỰ ĐỘNG + DANH SÁCH GAME) -->
+        <!-- 2. QUẢN TRỊ CẤU HÌNH TRẬN ĐẤU ĐANG DIỄN RA -->
+        <div id="activeMatchConfigBox" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3 hidden">
+          <div class="flex justify-between items-center">
+            <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-sliders text-indigo-600 mr-1"></i> Cấu Hình Trận Đang Diễn Ra</h3>
+            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Đang chạy</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Tên chương trình / Trận đấu</label>
+            <input type="text" id="editMatchNameInput" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold" />
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-bold text-slate-600">Danh sách Game (Chế độ & Điểm tối đa)</label>
+            </div>
+            <div id="activeMatchGameRows" class="space-y-2"></div>
+
+            <button type="button" onclick="window.addActiveMatchGameRow()" class="mt-2 w-full py-1.5 border border-dashed border-indigo-300 bg-indigo-50/50 text-indigo-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1">
+              <i class="fa-solid fa-plus text-xs"></i> Thêm Game Vào Trận Này
+            </button>
+          </div>
+
+          <button type="button" onclick="window.saveActiveMatchConfig()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-bold shadow-sm">
+            <i class="fa-solid fa-floppy-disk mr-1"></i> LƯU CẤU HÌNH TRẬN ĐẤU
+          </button>
+        </div>
+
+        <!-- 3. TẠO TRẬN ĐẤU MỚI -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
           <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-flag-checkered text-indigo-600 mr-1"></i> Tạo Chương Trình / Trận Đấu Mới</h3>
           
@@ -261,11 +320,10 @@
             <input type="text" id="newMatchName" placeholder="Nhập tên chương trình..." class="w-full px-3 py-2 border rounded-xl text-sm font-semibold" />
           </div>
 
-          <!-- SỐ LƯỢNG ĐỘI KHỞI TẠO TỰ ĐỘNG -->
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">2. Số lượng đội tham gia (Tự động tạo sẵn)</label>
-            <input type="number" id="newMatchTeamCount" value="11" min="1" max="30" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold" placeholder="Nhập số lượng đội (VD: 11)" />
-            <p class="text-[11px] text-slate-400 mt-0.5">Hệ thống sẽ tự động tạo đủ số đội (Đội 1, Đội 2...) kèm màu sắc nhận diện khác nhau.</p>
+            <input type="number" id="newMatchTeamCount" value="11" min="1" max="30" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold" placeholder="VD: 11" />
+            <p class="text-[11px] text-slate-400 mt-0.5">Hệ thống sẽ tự động tạo đủ số đội kèm màu sắc nhận diện riêng biệt.</p>
           </div>
 
           <div>
@@ -283,8 +341,12 @@
             <i class="fa-solid fa-circle-check mr-1"></i> Mở Trận Đấu Mới
           </button>
 
+          <!-- LỊCH SỬ CHƯƠNG TRÌNH (TRẬN ĐANG DIỄN RA Ở TRÊN CÙNG + NÚT MỞ LẠI) -->
           <div class="pt-3 border-t border-slate-100">
-            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Lịch Sử Chương Trình</label>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-xs font-bold uppercase text-slate-600">Lịch Sử Chương Trình</label>
+              <span class="text-[10px] text-slate-400">Tự động xóa sau 2 ngày</span>
+            </div>
             <div id="matchListAdmin" class="space-y-2"></div>
           </div>
         </div>
@@ -323,6 +385,54 @@
     var adminDraftGames = [
       { name: "", mode: "Tính giờ", pointScale: "50-40-30-20-0" }
     ];
+
+    var activeMatchDraftGames = [];
+
+    // KIỂM TRA THÔNG BÁO KHẨN TỪ BAN TỔ CHỨC
+    window.checkUrgentBroadcast = function() {
+      if (!appState.activeMatch || !appState.activeMatch.notifId || !appState.activeMatch.notifMessage) return;
+      var lastDismissed = localStorage.getItem("tb_dismissed_notif_" + appState.activeMatch.id);
+      if (lastDismissed !== appState.activeMatch.notifId) {
+        document.getElementById("urgentNoticeContent").textContent = appState.activeMatch.notifMessage;
+        var modal = document.getElementById("urgentNoticeModal");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    };
+
+    window.dismissUrgentNotice = function() {
+      if (appState.activeMatch && appState.activeMatch.notifId) {
+        localStorage.setItem("tb_dismissed_notif_" + appState.activeMatch.id, appState.activeMatch.notifId);
+      }
+      var modal = document.getElementById("urgentNoticeModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    };
+
+    window.sendBroadcast = async function() {
+      var msg = document.getElementById("broadcastInput").value.trim();
+      if (!msg) return alert("Vui lòng nhập nội dung thông báo!");
+      if (!confirm("Gửi thông báo này đến TẤT CẢ các trọng tài trên sân?")) return;
+
+      window.showToast("Đang phát thông báo...");
+      try {
+        var res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "SEND_NOTIFICATION", message: msg })
+        });
+        var r = await res.json();
+        if (r.status === "success") {
+          document.getElementById("broadcastInput").value = "";
+          appState = r.data;
+          window.renderAll();
+          window.showToast("Đã phát thông báo thành công!");
+        } else {
+          alert(r.message || "Lỗi khi gửi thông báo!");
+        }
+      } catch (e) {
+        window.showToast("Lỗi kết nối mạng!", true);
+      }
+    };
 
     window.syncAdminDraftGamesFromDOM = function() {
       adminDraftGames.forEach(function(item, idx) {
@@ -382,11 +492,127 @@
       window.renderAdminGameRows();
     };
 
+    window.syncActiveMatchDraftGamesFromDOM = function() {
+      activeMatchDraftGames.forEach(function(item, idx) {
+        var nameEl = document.getElementById("activeGameName_" + idx);
+        var modeEl = document.getElementById("activeGameMode_" + idx);
+        var scaleEl = document.getElementById("activeGameScale_" + idx);
+        if (nameEl) item.name = nameEl.value;
+        if (modeEl) item.mode = modeEl.value;
+        if (scaleEl) item.pointScale = scaleEl.value;
+      });
+    };
+
+    window.renderActiveMatchConfig = function() {
+      var box = document.getElementById("activeMatchConfigBox");
+      if (!appState.activeMatch) {
+        box.classList.add("hidden");
+        return;
+      }
+      box.classList.remove("hidden");
+      document.getElementById("editMatchNameInput").value = appState.activeMatch.name || "";
+
+      if (!activeMatchDraftGames || activeMatchDraftGames.length === 0) {
+        activeMatchDraftGames = (appState.activeMatch.games && appState.activeMatch.games.length)
+          ? JSON.parse(JSON.stringify(appState.activeMatch.games))
+          : [{ id: "G1", name: "Game 1", mode: "Tính giờ", pointScale: "50-40-30-20-0" }];
+      }
+
+      var container = document.getElementById("activeMatchGameRows");
+      container.innerHTML = activeMatchDraftGames.map(function(g, idx) {
+        return '<div class="p-2 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">' +
+          '<div class="flex gap-1.5 items-center">' +
+            '<span class="text-xs font-bold text-indigo-600 w-14 shrink-0">Game ' + (idx + 1) + '</span>' +
+            '<input type="text" id="activeGameName_' + idx + '" value="' + (g.name || '').replace(/"/g, '&quot;') + '" oninput="activeMatchDraftGames[' + idx + '].name = this.value" class="flex-1 px-2.5 py-1.5 border rounded-lg text-xs font-semibold bg-white" placeholder="Tên game..." />' +
+            (activeMatchDraftGames.length > 1
+              ? '<button type="button" onclick="window.removeActiveMatchGameRow(' + idx + ')" class="w-6 h-6 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-xs font-bold border border-red-200"><i class="fa-solid fa-xmark"></i></button>'
+              : '') +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-1.5">' +
+            '<select id="activeGameMode_' + idx + '" onchange="activeMatchDraftGames[' + idx + '].mode = this.value" class="w-full px-2 py-1.5 border rounded-lg text-xs font-bold bg-white text-indigo-700">' +
+              '<option value="Thêm điểm" ' + (g.mode === "Thêm điểm" ? "selected" : "") + '>Thêm điểm</option>' +
+              '<option value="Tính giờ" ' + (g.mode === "Tính giờ" ? "selected" : "") + '>Tính giờ</option>' +
+              '<option value="Đếm số" ' + (g.mode === "Đếm số" ? "selected" : "") + '>Đếm số</option>' +
+              '<option value="Xếp hạng" ' + (g.mode === "Xếp hạng" ? "selected" : "") + '>Xếp hạng</option>' +
+            '</select>' +
+            '<select id="activeGameScale_' + idx + '" onchange="activeMatchDraftGames[' + idx + '].pointScale = this.value" class="w-full px-2 py-1.5 border rounded-lg text-xs font-bold bg-white text-emerald-700">' +
+              '<option value="50-40-30-20-0" ' + (g.pointScale === "50-40-30-20-0" ? "selected" : "") + '>50đ-40đ-30đ-20đ-0đ</option>' +
+              '<option value="100-80-60-40-0" ' + (g.pointScale === "100-80-60-40-0" ? "selected" : "") + '>100đ-80đ-60đ-40đ-0đ</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    };
+
+    window.addActiveMatchGameRow = function() {
+      window.syncActiveMatchDraftGamesFromDOM();
+      activeMatchDraftGames.push({
+        id: "G" + (activeMatchDraftGames.length + 1),
+        name: "",
+        mode: "Tính giờ",
+        pointScale: "50-40-30-20-0"
+      });
+      window.renderActiveMatchConfig();
+    };
+
+    window.removeActiveMatchGameRow = function(idx) {
+      window.syncActiveMatchDraftGamesFromDOM();
+      if (activeMatchDraftGames.length <= 1) return;
+      activeMatchDraftGames.splice(idx, 1);
+      window.renderActiveMatchConfig();
+    };
+
+    window.saveActiveMatchConfig = async function() {
+      if (!appState.activeMatch) return;
+      window.syncActiveMatchDraftGamesFromDOM();
+      var newMatchName = document.getElementById("editMatchNameInput").value.trim();
+      if (!newMatchName) return alert("Vui lòng nhập tên trận!");
+
+      var cleanGames = [];
+      activeMatchDraftGames.forEach(function(g, idx) {
+        if (g.name && g.name.trim() !== "") {
+          cleanGames.push({
+            id: g.id || ("G" + (idx + 1)),
+            name: g.name.trim(),
+            mode: g.mode || "Tính giờ",
+            pointScale: g.pointScale || "50-40-30-20-0"
+          });
+        }
+      });
+
+      window.showToast("Đang lưu cấu hình trận...");
+      try {
+        var res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "UPDATE_MATCH_CONFIG",
+            idTran: appState.activeMatch.id,
+            tenTran: newMatchName,
+            games: cleanGames
+          })
+        });
+        var r = await res.json();
+        if (r.status === "success") {
+          appState = r.data;
+          activeMatchDraftGames = JSON.parse(JSON.stringify(appState.activeMatch.games || []));
+          window.renderAll();
+          window.showToast("Đã lưu cấu hình trận đấu thành công!");
+        } else {
+          alert(r.message || "Lỗi lưu cấu hình!");
+        }
+      } catch (e) {
+        window.showToast("Lỗi kết nối mạng!", true);
+      }
+    };
+
     window.checkRefereeName = function() {
+      var modal = document.getElementById("refereeNameModal");
       if (!refereeName) {
-        document.getElementById("refereeNameModal").classList.remove("hidden");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
       } else {
-        document.getElementById("refereeNameModal").classList.add("hidden");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
         document.getElementById("currentRefNameLabel").textContent = refereeName;
       }
     };
@@ -397,7 +623,9 @@
       refereeName = val;
       localStorage.setItem("tb_referee_name", val);
       document.getElementById("currentRefNameLabel").textContent = val;
-      document.getElementById("refereeNameModal").classList.add("hidden");
+      var modal = document.getElementById("refereeNameModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
       window.showToast("Xin chào Trọng tài: " + val);
     };
 
@@ -425,7 +653,11 @@
       try {
         var res = await fetch(SCRIPT_URL);
         appState = await res.json();
+        if (appState.activeMatch && (!activeMatchDraftGames || activeMatchDraftGames.length === 0)) {
+          activeMatchDraftGames = JSON.parse(JSON.stringify(appState.activeMatch.games || []));
+        }
         window.renderAll();
+        window.checkUrgentBroadcast();
       } catch (e) {
         console.error(e);
       } finally {
@@ -454,6 +686,7 @@
       window.renderLiveFeed();
       window.renderLeaderboard();
       window.renderTeamsAdmin();
+      window.renderActiveMatchConfig();
       window.renderMatchesAdmin();
     };
 
@@ -473,12 +706,12 @@
         var isSelected = t.id === selectedTeamId;
         if (isLocked) {
           if (isSelected) {
-            return '<button type="button" disabled class="p-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold shadow-sm flex items-center justify-between"><span class="text-xs flex items-center gap-1.5 truncate"><span class="w-3 h-3 rounded-full inline-block shrink-0" style="background:' + t.color + '"></span>' + t.name + '</span><i class="fa-solid fa-lock text-indigo-600 text-sm"></i></button>';
+            return '<button type="button" disabled class="p-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-bold shadow-sm flex items-center justify-between"><span class="text-xs flex items-center gap-1.5 truncate"><span class="w-3.5 h-3.5 rounded-full inline-block shrink-0 border border-white" style="background:' + t.color + '"></span>' + t.name + '</span><i class="fa-solid fa-lock text-indigo-600 text-sm"></i></button>';
           } else {
-            return '<button type="button" disabled class="p-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-400 opacity-40 font-medium flex items-center justify-between cursor-not-allowed"><span class="text-xs flex items-center gap-1.5 truncate"><span class="w-3 h-3 rounded-full inline-block shrink-0" style="background:' + t.color + '"></span>' + t.name + '</span></button>';
+            return '<button type="button" disabled class="p-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-400 opacity-40 font-medium flex items-center justify-between cursor-not-allowed"><span class="text-xs flex items-center gap-1.5 truncate"><span class="w-3.5 h-3.5 rounded-full inline-block shrink-0" style="background:' + t.color + '"></span>' + t.name + '</span></button>';
           }
         } else {
-          return '<button type="button" onclick="window.lockAndSelectTeam(\'' + t.id + '\')" class="p-2.5 rounded-xl border-2 text-left transition flex items-center justify-between border-slate-200 bg-white text-slate-700 font-medium hover:border-indigo-400"><span class="text-xs flex items-center gap-1.5 truncate"><span class="w-3 h-3 rounded-full inline-block shrink-0" style="background:' + t.color + '"></span>' + t.name + '</span></button>';
+          return '<button type="button" onclick="window.lockAndSelectTeam(\'' + t.id + '\')" class="p-2.5 rounded-xl border-2 text-left transition flex items-center justify-between border-slate-200 bg-white text-slate-700 font-medium hover:border-indigo-400"><span class="text-xs flex items-center gap-1.5 truncate"><span class="w-3.5 h-3.5 rounded-full inline-block shrink-0" style="background:' + t.color + '"></span>' + t.name + '</span></button>';
         }
       }).join("");
 
@@ -800,7 +1033,7 @@
         return '<div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">' +
           '<div class="space-y-0.5">' +
             '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5">' +
-              '<span class="w-2.5 h-2.5 rounded-full inline-block" style="background:' + log.mauSac + '"></span>' +
+              '<span class="w-2.5 h-2.5 rounded-full inline-block border border-white" style="background:' + log.mauSac + '"></span>' +
               log.tenDoi +
             '</div>' +
             '<div class="text-xs font-semibold ' + (log.phamQuy ? 'text-red-600' : 'text-indigo-600') + '">' +
@@ -830,14 +1063,14 @@
         return '<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">' +
           '<div class="flex items-center gap-3">' +
             '<span class="w-8 h-8 rounded-full font-extrabold text-xs flex items-center justify-center ' + badgeColor + '">#' + (idx + 1) + '</span>' +
-            '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5"><span class="w-3 h-3 rounded-full inline-block" style="background:' + t.color + '"></span>' + t.name + '</div>' +
+            '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full inline-block border border-white" style="background:' + t.color + '"></span>' + t.name + '</div>' +
           '</div>' +
           '<div class="text-lg font-extrabold text-indigo-700">' + t.totalScore + ' đ</div>' +
         '</div>';
       }).join("");
     };
 
-    // QUẢN TRỊ VIÊN (MỞ KHÓA BẰNG PIN NGẦM)
+    // QUẢN TRỊ VIÊN
     window.unlockAdmin = function() {
       var pin = document.getElementById("adminPinInput").value.trim();
       if (pin === SECRET_PIN) {
@@ -859,21 +1092,28 @@
       document.getElementById("adminPinInput").value = "";
     };
 
-    // QUẢN LÝ ĐỘI: DANH SÁCH ĐỘI (CÓ NÚT SỬA TÊN & MÀU, NÚT XÓA)
+    // HIỂN THỊ DANH SÁCH ĐỘI KÈM TÊN TRỌNG TÀI
     window.renderTeamsAdmin = function() {
       var container = document.getElementById("teamListAdmin");
       if (!container) return;
       if (!appState.teams || !appState.teams.length) {
-        container.innerHTML = '<div class="text-xs text-slate-400 italic">Chưa có đội chơi nào.</div>';
+        container.innerHTML = '<div class="text-xs text-slate-400 italic">Chưa có đội chơi nào trong trận này.</div>';
         return;
       }
       container.innerHTML = appState.teams.map(function(t) {
         var safeName = t.name.replace(/'/g, "\\'");
         var safeColor = (t.color || "#3b82f6").replace(/'/g, "\\'");
+        var refTag = t.referee 
+          ? '<span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold flex items-center gap-1"><i class="fa-solid fa-user-check"></i> ' + t.referee + '</span>'
+          : '<span class="text-[10px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md font-medium">Chưa có trọng tài</span>';
+
         return '<div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50">' +
-          '<div class="flex items-center gap-2 truncate pr-2">' +
-            '<span class="w-4 h-4 rounded-full inline-block shrink-0 shadow-sm border border-white" style="background:' + t.color + '"></span>' +
-            '<span class="text-xs font-bold text-slate-800 truncate">' + t.name + '</span>' +
+          '<div class="space-y-1 truncate pr-2">' +
+            '<div class="flex items-center gap-2">' +
+              '<span class="w-4 h-4 rounded-full inline-block shrink-0 shadow-sm border border-white" style="background:' + t.color + '"></span>' +
+              '<span class="text-xs font-bold text-slate-800 truncate">' + t.name + '</span>' +
+            '</div>' +
+            '<div>' + refTag + '</div>' +
           '</div>' +
           '<div class="flex items-center gap-1.5 shrink-0">' +
             '<button type="button" onclick="window.openEditTeamModal(\'' + t.id + '\', \'' + safeName + '\', \'' + safeColor + '\')" class="text-xs text-indigo-600 font-bold px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200">' +
@@ -887,16 +1127,19 @@
       }).join("");
     };
 
-    // MODAL SỬA TÊN & MÀU SẮC ĐỘI
     window.openEditTeamModal = function(idDoi, currentName, currentColor) {
       document.getElementById("editTeamId").value = idDoi;
       document.getElementById("editTeamNameInput").value = currentName;
       document.getElementById("editTeamColorInput").value = currentColor || "#3b82f6";
-      document.getElementById("editTeamModal").classList.remove("hidden");
+      var modal = document.getElementById("editTeamModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
     };
 
     window.closeEditTeamModal = function() {
-      document.getElementById("editTeamModal").classList.add("hidden");
+      var modal = document.getElementById("editTeamModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
     };
 
     window.saveEditTeam = async function() {
@@ -975,7 +1218,7 @@
       }
     };
 
-    // TẠO TRẬN ĐẤU MỚI (TỰ ĐỘNG TẠO ĐỦ SỐ ĐỘI THAM GIA)
+    // TẠO TRẬN ĐẤU MỚI (TỰ ĐỘNG TẠO ĐỦ SỐ ĐỘI)
     window.createNewMatch = async function() {
       var tenTran = document.getElementById("newMatchName").value.trim();
       if (!tenTran) return window.showToast("Vui lòng nhập Tên chương trình!", true);
@@ -1015,6 +1258,7 @@
           selectedGameName = "Hoạt náo";
           selectedMode = "Thêm điểm";
           appState = r.data;
+          activeMatchDraftGames = JSON.parse(JSON.stringify(appState.activeMatch.games || []));
           window.renderAll();
           window.showToast("Đã tạo chương trình và tự động sinh " + (teamCount > 0 ? teamCount : 0) + " đội!");
         } else {
@@ -1025,6 +1269,7 @@
       }
     };
 
+    // RENDER LỊCH SỬ CHƯƠNG TRÌNH: TRẬN ĐANG DIỄN RA Ở TRÊN CÙNG + NÚT MỞ LẠI
     window.renderMatchesAdmin = function() {
       var container = document.getElementById("matchListAdmin");
       if (!container) return;
@@ -1033,20 +1278,46 @@
         return;
       }
       container.innerHTML = appState.matches.map(function(m) {
-        return '<div class="flex items-center justify-between p-2.5 rounded-xl border ' + (m.status === 'Đang diễn ra' ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-slate-50') + '">' +
+        var isCurrent = (m.status === "Đang diễn ra");
+        return '<div class="flex items-center justify-between p-3 rounded-2xl border ' + (isCurrent ? 'border-emerald-300 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-slate-50') + '">' +
           '<div>' +
             '<div class="text-xs font-bold text-slate-800">' + m.name + '</div>' +
-            '<div class="text-[11px] ' + (m.status === 'Đang diễn ra' ? 'text-emerald-600 font-bold' : 'text-slate-400') + '">' + m.status + ' • ' + (m.gameCount || 0) + ' game thiết lập</div>' +
+            '<div class="text-[11px] ' + (isCurrent ? 'text-emerald-600 font-bold' : 'text-slate-400') + '">' + m.status + ' • ' + (m.gameCount || 0) + ' game thiết lập</div>' +
           '</div>' +
-          (m.status === 'Đang diễn ra'
-            ? '<button type="button" onclick="window.endMatch(\'' + m.id + '\')" class="bg-red-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold">Kết thúc</button>'
-            : '') +
+          '<div>' +
+            (isCurrent 
+              ? '<button type="button" onclick="window.endMatch(\'' + m.id + '\')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">Kết thúc</button>'
+              : '<button type="button" onclick="window.reopenMatch(\'' + m.id + '\', \'' + m.name.replace(/'/g, "\\'") + '\')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1"><i class="fa-solid fa-arrow-rotate-left text-[10px]"></i> Mở lại</button>'
+            ) +
+          '</div>' +
         '</div>';
       }).join("");
     };
 
+    window.reopenMatch = async function(idTran, matchName) {
+      if (!confirm("Mở lại chương trình [" + matchName + "] để tiếp tục chấm điểm hoặc xem lại kết quả?")) return;
+      window.showToast("Đang mở lại trận...");
+      try {
+        var res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "REOPEN_MATCH", idTran: idTran })
+        });
+        var r = await res.json();
+        if (r.status === "success") {
+          appState = r.data;
+          activeMatchDraftGames = JSON.parse(JSON.stringify(appState.activeMatch.games || []));
+          window.renderAll();
+          window.showToast("Đã mở lại chương trình thành công!");
+        } else {
+          alert(r.message || "Lỗi khi mở lại trận!");
+        }
+      } catch (e) {
+        window.showToast("Lỗi kết nối mạng!", true);
+      }
+    };
+
     window.endMatch = async function(idTran) {
-      if (!confirm("Kết thúc chương trình này?")) return;
+      if (!confirm("Kết thúc chương trình này? (Bạn vẫn có thể Mở lại bất kỳ lúc nào)")) return;
       window.showToast("Đang kết thúc trận...");
       try {
         var res = await fetch(SCRIPT_URL, {
@@ -1081,8 +1352,10 @@
 
     window.addEventListener("DOMContentLoaded", function() {
       window.renderAdminGameRows();
+      window.renderAll();
       window.checkRefereeName();
       window.fetchData(true);
+      setInterval(function() { window.fetchData(false); }, 15000);
     });
   </script>
 </body>
